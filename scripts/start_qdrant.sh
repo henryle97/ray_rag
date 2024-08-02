@@ -1,0 +1,1 @@
+docker run -p 6345:6333 qdrant/qdrant

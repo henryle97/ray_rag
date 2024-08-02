@@ -205,3 +205,7 @@ poetry.toml
 
 # End of https://www.toptal.com/developers/gitignore/api/jupyternotebooks,visualstudiocode,ssh,python
 *__pycache__*
+
+experiments/
+migrations/
+data/

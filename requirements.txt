@@ -1,0 +1,9 @@
+beautifulsoup4
+langchain
+langchain-community
+langchain-huggingface
+ray[data,train,tune,serve]
+ipywidgets
+sentence-transformers
+psycopg[binary,pool]
+pgvector
