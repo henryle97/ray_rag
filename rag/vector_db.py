@@ -89,7 +89,7 @@ class VectorDB:
         if len(vector) == 0:
             return []
 
-        print(f"Vector: {vector}")
+        # print(f"Vector: {vector}")
         try:
             query_results = self.client.search(
                 collection_name=collection_name,

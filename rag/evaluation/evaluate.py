@@ -9,7 +9,7 @@ from tqdm import tqdm
 from rag import config
 from rag.agent import QueryAgentWithContext
 from rag.data import fetch_text
-from rag.generate import generate_response
+from rag.agent import generate_response
 from rag.schemas import QueryAgentWithContentResponse
 from rag.utils import get_num_tokens, trim
 
@@ -96,7 +96,7 @@ def get_retrieval_score(references: List[dict], responses: List[dict]):
     return retrieval_score
 
 
-def evaluate_response(
+def evaluate_responses(
     exp_name: str,
     evaluator: str,
     temperature: float,
@@ -112,8 +112,9 @@ def evaluate_response(
     with open(ref_fp, "r") as f:
         references = [item for item in json.load(f)][:num_samples]
     with open(resp_fp, "r") as f:
-        responses = [item for item in json.load(f)][:num_samples]
+        responses = [item for item in json.load(f)['results']][:num_samples]
 
+    
     # Quality score
     results = []
     context_length = max_context_length - get_num_tokens(
@@ -180,7 +181,7 @@ def evaluate_response(
             [
                 item["score"]
                 for item in results
-                if (item["score" and item["reference_answer"]])
+                if (item["score"] and item["reference_answer"])
             ]
         ),
         "results": results,

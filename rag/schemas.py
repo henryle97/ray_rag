@@ -30,10 +30,17 @@ class QueryAgentWithContentResponse:
 
 @dataclass
 class QueryAgentResponse(QueryAgentWithContentResponse):
-    questions: str
+    question: str
     sources: list[str]
     document_ids: list[str]
 
+    def to_dict(self):
+        return {
+            "question": self.question,
+            "sources": self.sources,
+            "document_ids": self.document_ids,
+            "answer": self.answer,
+        }
 
 from rag import config
 

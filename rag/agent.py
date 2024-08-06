@@ -131,7 +131,7 @@ class QueryAgent:
         )
 
         return QueryAgentResponse(
-            questions=query,
+            question=query,
             sources=sources,
             document_ids=document_ids,
             answer=answer,

@@ -20,6 +20,7 @@ def generate_responses(
     docs_dir: str,
     exp_dir: str,
     ref_fp: str,
+    resp_fp: str, 
     num_samples: Optional[int] = None,
 ):
     # Build index
@@ -65,13 +66,13 @@ def generate_responses(
             rerank_k=hyperparams.reranking_k,
             stream=False,
         )
-        results.append(response)
+        results.append(response.to_dict())
 
     # save to file
-    response_fp = Path(
-        config.ROOT_DIR, exp_dir, "responses", f"{exp_name}.json"
-    )
-    response_fp.parent.mkdir(parents=True, exist_ok=True)
+    # response_fp = Path(
+    #     config.ROOT_DIR, exp_dir, "responses", f"{exp_name}.json"
+    # )
+    Path(resp_fp).parent.mkdir(parents=True, exist_ok=True)
     exp_config = {
         "experiment_name": exp_name,
         "chunk_size": hyperparams.chunk_size,
@@ -88,7 +89,7 @@ def generate_responses(
         "references_fp": str(ref_fp),
         "num_samples": len(questions),
     }
-
+    print("Responses: ", results)
     responses = {"config": exp_config, "results": results}
-    with open(response_fp, "w") as f:
+    with open(resp_fp, "w") as f:
         json.dump(responses, f, indent=4, ensure_ascii=False)
