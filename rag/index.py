@@ -1,7 +1,7 @@
 import os
 from functools import partial
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import ray
 from dotenv import load_dotenv
@@ -11,7 +11,7 @@ from langchain_core.documents import Document
 import rag.config as config
 from rag.data import extract_sections
 from rag.embed import EmbedChunks
-from rag.vector_db import VectorDB, get_vector_db
+from rag.vector_db import VectorDB, get_collection_name_from, get_vector_db
 
 load_dotenv()
 
@@ -24,7 +24,7 @@ class StoreResults:
         collection_name: str,
         db_name: str = "default",
     ):
-        self.db_client = get_vector_db(host=host, port=port, db_name=db_name)
+        self.db_client = get_vector_db(host=host, port=port, db_type=db_name)
         self.collection_name = collection_name
 
     def __call__(self, batch: dict):
@@ -104,8 +104,12 @@ def build_index(
 
     # # Index data
     db_client = get_vector_db(host=config.DB_HOST, port=config.DB_PORT)
+    collection_name = get_collection_name_from(
+        embedding_model_name=config.EMBEDDING_MODEL_NAME,
+        embedding_dim=config.EMBEDDING_DIMENSIONS[config.EMBEDDING_MODEL_NAME],
+    )
     db_client.setup(
-        collection_name=config.COLLECTION_NAME,
+        collection_name=collection_name,
         vector_size=config.EMBEDDING_DIMENSIONS[config.EMBEDDING_MODEL_NAME],
         force_recreate=force_recreate,
     )
@@ -115,7 +119,7 @@ def build_index(
         fn_constructor_kwargs={
             "host": config.DB_HOST,
             "port": config.DB_PORT,
-            "collection_name": config.COLLECTION_NAME,
+            "collection_name": collection_name,
         },
         batch_size=128,
         num_cpus=4,
@@ -123,6 +127,16 @@ def build_index(
     ).count()
 
     print("Updated the index!")
+
+
+def load_index(
+    embedding_model_name: str,
+    embedding_dim: int,
+    chunk_size: int,
+    chunk_overlap: int,
+    docs_dir: Optional[str] = None,
+) -> List[str]:
+    return []
 
 
 if __name__ == "__main__":
@@ -134,4 +148,5 @@ if __name__ == "__main__":
         chunk_size=config.CHUNK_SIZE,
         chunk_overlap=config.CHUNK_OVERLAP,
         embedding_model_name=config.EMBEDDING_MODEL_NAME,
+        force_recreate=True,
     )

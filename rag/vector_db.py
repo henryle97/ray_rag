@@ -11,6 +11,10 @@ def get_vector_db(host: str, port: int, db_type: str = "qdrant"):
     return VectorDB(host=host, port=port, db_type=db_type)
 
 
+def get_collection_name_from(embedding_model_name: str, embedding_dim: int):
+    return f"{embedding_model_name.replace('/', '_')}_{embedding_dim}"
+
+
 class VectorDB:
     def __init__(self, host: str, port: int, db_type: str = "qdrant"):
         self.client = QdrantClient(host=host, port=port, timeout=600)
@@ -81,12 +85,21 @@ class VectorDB:
         collection_name: str = "default_collection",
         top_k: int = 10,
     ) -> List[types.ScoredPoint]:
-        query_results = self.client.search(
-            collection_name=collection_name,
-            query_vector=(vector_name, vector),
-            limit=top_k,
-            query_filter=None,
-        )
+
+        if len(vector) == 0:
+            return []
+
+        print(f"Vector: {vector}")
+        try:
+            query_results = self.client.search(
+                collection_name=collection_name,
+                query_vector=(vector_name, vector),
+                limit=top_k,
+                query_filter=None,
+            )
+        except Exception as e:
+            print(f"Error in search: {e}")
+            query_results = []
         return query_results
 
 

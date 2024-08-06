@@ -1,14 +1,43 @@
-
 from typing import List, Optional
+
+from qdrant_client.conversions import common_types as types
+
 from rag import config
 from rag.embed import get_embedding_model
-from rag.generate import generate_response
 from rag.llm import send_request
 from rag.schemas import QueryAgentResponse, QueryAgentWithContentResponse
 from rag.search import semantic_search
 from rag.utils import get_num_tokens
-from rag.vector_db import get_vector_db
-from qdrant_client.conversions import common_types as types
+from rag.vector_db import get_collection_name_from, get_vector_db
+
+
+def generate_response(
+    llm_model_name: str,
+    max_tokens: int = None,
+    temperature: float = 0.0,
+    stream: bool = False,
+    system_content: str = "",
+    assistant_content: str = "",
+    user_content: str = "",
+) -> str:
+    messages = [
+        {"role": role, "content": content}
+        for role, content in [
+            ("system", system_content),
+            ("assistant", assistant_content),
+            ("user", user_content),
+        ]
+        if content
+    ]
+    print("Messages: ", messages)
+    return send_request(
+        model_name=llm_model_name,
+        messages=messages,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        stream=stream,
+    )
+
 
 class QueryAgent:
     def __init__(
@@ -19,6 +48,9 @@ class QueryAgent:
         max_context_length: int = 4096,
         system_content: str = "",
         assistant_content: str = "",
+        lexical_index=None,
+        chunks: Optional[List[str]] = None,
+        reranker=None,
     ):
         if embedding_model_name is not None:
             self.embdding_model = get_embedding_model(
@@ -35,6 +67,12 @@ class QueryAgent:
         self.db_client = get_vector_db(
             host=config.DB_HOST, port=config.DB_PORT, db_type=config.DB_TYPE
         )
+        self.collection_name = collection_name = get_collection_name_from(
+            embedding_model_name=config.EMBEDDING_MODEL_NAME,
+            embedding_dim=config.EMBEDDING_DIMENSIONS[
+                config.EMBEDDING_MODEL_NAME
+            ],
+        )
 
         # llm
         self.llm_model_name = llm_model_name
@@ -48,8 +86,21 @@ class QueryAgent:
         self.system_content = system_content
         self.assistant_content = assistant_content
 
+        # lexical search
+        self.chunks = chunks
+        self.lexical_index = lexical_index
+
+        # reranker
+        self.reranker = reranker
+
     def __call__(
-        self, query: str, top_k_contexts: int = 5, stream: bool = False
+        self,
+        query: str,
+        top_k_contexts: int = 5,
+        lexical_search_k: int = 1,
+        rerank_threshold: float = 0.2,
+        rerank_k: int = 7,
+        stream: bool = False,
     ) -> QueryAgentResponse:
         # Get top k context
         context_results: List[types.ScoredPoint] = semantic_search(
@@ -57,7 +108,7 @@ class QueryAgent:
             query=query,
             top_k=top_k_contexts,
             db_client=self.db_client,
-            collection_name=config.COLLECTION_NAME,
+            collection_name=self.collection_name,
         )
 
         # Add lexical search results
@@ -85,8 +136,8 @@ class QueryAgent:
             document_ids=document_ids,
             answer=answer,
         )
-        
-        
+
+
 class QueryAgentWithContext(QueryAgent):
     def __call__(self, query: str, context: str, stream: bool = False):
         user_content = f"query: {query}, context: {context}"
@@ -96,10 +147,7 @@ class QueryAgentWithContext(QueryAgent):
             temperature=self.temperature,
             system_content=self.system_content,
             assistant_content=self.assistant_content,
-            user_content=user_content[:self.context_length],
+            user_content=user_content[: self.context_length],
             stream=stream,
         )
-        return QueryAgentWithContentResponse(
-            answer=response
-        )
-        
+        return QueryAgentWithContentResponse(answer=response)

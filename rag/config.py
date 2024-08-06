@@ -8,6 +8,9 @@ dotenv.load_dotenv()
 # Directories
 EFS_DIR = Path("/mnt/hdd4T/henryle/llm/dataset")
 ROOT_DIR = Path(__file__).parent.parent.absolute()
+DOCS_DIR = Path(EFS_DIR, "docs.ray.io/en/master/")
+EXPERIMENTS_DIR = Path(ROOT_DIR, "experiments")
+
 
 EMBEDDING_MODEL_NAME = "BAAI/bge-small-en-v1.5"
 EMBEDDING_DEVICE = "cuda:0"
@@ -17,7 +20,7 @@ EMBEDDING_BATCHSIZE = 100
 PARQUET_FILE = "/home/hoanglv/works/LLM/RAG/ray_rag/experiments/chunks.parquet"
 
 # Qdrant
-COLLECTION_NAME = "ray_docs"
+# COLLECTION_NAME = "ray_docs"
 DB_TYPE = "qdrant"
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", 6333)
@@ -29,6 +32,7 @@ LLM_MODEL_NAME = (
 )
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 TEMPERATURE = 0.0
+EVALUATOR = "/home/tuyendt/workspaces/huggingface/Meta-Llama-3-8B-Instruct/"
 
 
 # RAG CONFIG
@@ -94,7 +98,7 @@ ASSISTANT_CONTENT = ""
 # Evaluation
 EXPERIMENTS_DIR = "./experiments"
 REFERENCES_FILE_PATH = EXPERIMENTS_DIR + "/references/" + "llama-3.json"
-NUM_EVAL_SAMPLES = None   # None = all samples
+NUM_EVAL_SAMPLES = None  # None = all samples
 
 EVALUATE_SYSTEM_CONTENT = """
     Answer the query using the context provided. Be succinct.
@@ -112,3 +116,9 @@ EVALUATE_SYSTEM_CONTENT = """
     """
 
 EVALUATE_ASSISTANT_CONTENT = ""
+
+EXPERIMENT_SYSTEM_CONTENT = """
+    Answer the query using the context provided. Be succinct. "
+    Contexts are organized in a list of dictionaries [{'text': <context>}, {'text': <context>}, ...]. "
+    Feel free to ignore any contexts in the list that don't seem relevant to the query.
+"""

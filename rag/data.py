@@ -40,6 +40,7 @@ def extract_text_from_section(section: BeautifulSoup):
 def path_to_uri(path: str, scheme="https://", domain: str = "docs.ray.io"):
     return scheme + domain + str(path).split(domain)[-1]
 
+
 def fetch_text(uri: str) -> str:
     """
     uri = "https://docs.ray.io/en/master/data/transforming-data.html#configuring-batch-format"
@@ -47,10 +48,10 @@ def fetch_text(uri: str) -> str:
     """
     url, anchor = uri.split("#") if "#" in uri else (uri, None)
     file_path = Path(config.EFS_DIR, url.split("https://")[-1])
-    
+
     if not file_path.exists():
         print(f"File not found at {file_path}")
-        return "" 
+        return ""
     with open(file_path, "r", encoding="utf8") as html_file:
         html_content = html_file.read()
     soup = BeautifulSoup(markup=html_content, features="html.parser")
@@ -62,5 +63,5 @@ def fetch_text(uri: str) -> str:
             return fetch_text(uri=url)
     else:
         text = soup.get_text()
-    
+
     return text
